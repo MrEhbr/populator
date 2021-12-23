@@ -19,7 +19,7 @@ ifneq ($(wildcard .git/HEAD),)
 generate.authors: AUTHORS
 AUTHORS: .git/
 	echo "# This file lists all individuals having contributed content to the repository." > AUTHORS
-	echo "# For how it is generated, see 'https://github.com/MrEhbr/golang-repo-template/rules.mk'" >> AUTHORS
+	echo "# For how it is generated, see 'https://github.com/MrEhbr/populator/rules.mk'" >> AUTHORS
 	echo >> AUTHORS
 	git log --format='%aN <%aE>' | LC_ALL=C.UTF-8 sort -uf >> AUTHORS
 GENERATE_STEPS += generate.authors
@@ -75,7 +75,7 @@ go.unittest:
 	@echo "mode: atomic" > /tmp/gocoverage
 	@set -e; for dir in $(GOMOD_DIRS); do (set -e; (set -xe; \
 	  cd $$dir; \
-	  $(GO) test $(WHAT) $(GO_TEST_OPTS) -cover -coverprofile=/tmp/profile.out -covermode=atomic -race); \
+	  $(GO) test $(WHAT) $(GO_TEST_OPTS) -cover -coverprofile=/tmp/profile.out -covermode=atomic); \
 	  if [ -f /tmp/profile.out ]; then \
 		cat /tmp/profile.out | sed "/mode: atomic/d" >> /tmp/gocoverage; \
 		rm -f /tmp/profile.out; \
@@ -122,28 +122,6 @@ go.generate:
 	); done
 GENERATE_STEPS += go.generate
 
-.PHONY: go.depaware-update
-go.depaware-update: go.tidy
-	@# gen depaware for bins
-	@set -e; for dir in $(GOBINS); do ( set -xe; \
-	  cd $$dir; \
-	  $(GO) run github.com/tailscale/depaware --update . \
-	); done
-	@# tidy unused depaware deps if not in a tools_test.go file
-	@set -e; for dir in $(GOMOD_DIRS); do ( set -xe; \
-	  cd $$dir; \
-	  $(GO)	mod tidy; \
-	); done
-
-.PHONY: go.depaware-check
-go.depaware-check: go.tidy
-	@# gen depaware for bins
-	@set -e; for dir in $(GOBINS); do ( set -xe; \
-	  cd $$dir; \
-	  $(GO) run github.com/tailscale/depaware --check . \
-	); done
-
-
 .PHONY: go.build
 go.build:
 	@set -e; for dir in $(GOMOD_DIRS); do ( set -xe; \
@@ -166,7 +144,7 @@ go.bumpdeps:
 go.fmt:
 	@set -e; for dir in $(GOMOD_DIRS); do ( set -e; \
 	  cd $$dir; \
-	  $(GO) run mvdan.cc/gofumpt -extra -w -l -s `go list -f '{{.Dir}}' $(WHAT) | grep -v mocks` \
+	  $(GO) run mvdan.cc/gofumpt -extra -l -s `go list -f '{{.Dir}}' $(WHAT) | grep -v mocks` \
 	); done
 
 VERIFY_STEPS += go.depaware-check
